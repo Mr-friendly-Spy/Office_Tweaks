@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from utils import print_success, print_error, print_warning, print_info, confirm_action, get_file_size
+from utils import print_success, print_error, print_warning, print_info, confirm_action
 
 
 class FileManager:
@@ -64,6 +64,18 @@ class FileManager:
         """Список изображений"""
         return self.list_files_by_extension(['jpg', 'jpeg', 'png', 'gif'])
 
+    def get_file_size(self, file_path):
+        """Получение размера файла в читаемом формате"""
+        try:
+            size = os.path.getsize(file_path)
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if size < 1024.0:
+                    return f"{size:.2f} {unit}"
+                size /= 1024.0
+            return f"{size:.2f} TB"
+        except:
+            return "unknown size"
+
     def delete_files_by_pattern(self, pattern_type, pattern):
         """Удаление файлов по шаблону"""
         try:
@@ -92,7 +104,7 @@ class FileManager:
             # Показать файлы для удаления
             print_info(f"Найдено файлов для удаления: {len(files_to_delete)}")
             for i, file_path in enumerate(files_to_delete, 1):
-                size = get_file_size(file_path)
+                size = self.get_file_size(file_path)
                 print(f"  {i}. {file_path.name} ({size})")
 
             # Подтверждение
