@@ -76,6 +76,17 @@ class FileManager:
         except:
             return "unknown size"
 
+    def get_file_size_from_bytes(self, size_bytes):
+        """Получение читаемого формата размера из байтов"""
+        try:
+            size = size_bytes
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if size < 1024.0:
+                    return f"{size:.2f} {unit}"
+                size /= 1024.0
+            return f"{size:.2f} TB"
+        except:
+            return "unknown size"
     def delete_files_by_pattern(self, pattern_type, pattern):
         """Удаление файлов по шаблону"""
         try:
