@@ -41,6 +41,14 @@ def print_info(message):
     print(f"{Fore.CYAN}ℹ {message}{Style.RESET_ALL}")
 
 
+def print_banner(version):
+    """Вывод баннера программы"""
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(f"\n{'=' * 50}")
+    print(f"=== Office Tweaks v{version} ===")
+    print(f"{'=' * 50}")
+
+
 def validate_number_input(input_str, min_val, max_val):
     """Валидация числового ввода"""
     try:
@@ -57,11 +65,23 @@ def get_file_size(file_path):
     """Получение размера файла в читаемом формате"""
     try:
         size = os.path.getsize(file_path)
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if size < 1024.0:
-                return f"{size:.2f} {unit}"
+        return get_file_size_from_bytes(size)
+    except:
+        return "unknown size"
+
+
+def get_file_size_from_bytes(size_bytes):
+    """Получение читаемого формата размера из байтов"""
+    try:
+        size = size_bytes
+        units = ['B', 'KB', 'MB', 'GB']
+        unit_index = 0
+
+        while size >= 1024.0 and unit_index < len(units) - 1:
             size /= 1024.0
-        return f"{size:.2f} TB"
+            unit_index += 1
+
+        return f"{size:.2f} {units[unit_index]}"
     except:
         return "unknown size"
 
@@ -89,3 +109,18 @@ def show_progress(current, total, description="Обработка"):
 
     if current == total:
         print()
+
+
+def print_summary(success_count, total_count, total_savings=0, total_original_size=0):
+    """Вывод сводки обработки"""
+    print(f"\n{'=' * 50}")
+    print("Сводка обработки:")
+    print(f"  Успешно обработано: {success_count}/{total_count}")
+
+    if success_count < total_count:
+        print(f"  Не удалось обработать: {total_count - success_count}")
+
+    if total_original_size > 0 and total_savings > 0:
+        total_savings_percent = (total_savings / total_original_size) * 100
+        print(f"  Общая экономия места: {get_file_size_from_bytes(total_savings)} ({total_savings_percent:.1f}%)")
+    print(f"{'=' * 50}")

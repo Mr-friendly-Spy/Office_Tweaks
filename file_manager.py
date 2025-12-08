@@ -5,8 +5,11 @@ from utils import print_success, print_error, print_warning, print_info, confirm
 
 
 class FileManager:
-    def __init__(self):
-        self.current_directory = Path.cwd()
+    def __init__(self, workdir=None):
+        if workdir:
+            self.current_directory = Path(workdir).resolve()
+        else:
+            self.current_directory = Path.cwd()
 
     def get_current_directory(self):
         """Получить текущий рабочий каталог"""
@@ -76,23 +79,21 @@ class FileManager:
         except:
             return "unknown size"
 
-    def get_file_size_from_bytes(self, size_bytes):
-        """Получение читаемого формата размера из байтов"""
-        try:
-            size = size_bytes
-            for unit in ['B', 'KB', 'MB', 'GB']:
-                if size < 1024.0:
-                    return f"{size:.2f} {unit}"
-                size /= 1024.0
-            return f"{size:.2f} TB"
-        except:
-            return "unknown size"
-    def delete_files_by_pattern(self, pattern_type, pattern):
+    def delete_files_by_pattern(self, pattern_type, pattern, directory=None):
         """Удаление файлов по шаблону"""
         try:
+            if directory:
+                target_dir = Path(directory)
+            else:
+                target_dir = self.current_directory
+
+            if not target_dir.exists():
+                print_error(f"Каталог '{target_dir}' не существует")
+                return False
+
             files_to_delete = []
 
-            for file_path in self.current_directory.iterdir():
+            for file_path in target_dir.iterdir():
                 if not file_path.is_file():
                     continue
 
@@ -112,32 +113,25 @@ class FileManager:
                 print_info("Файлы, соответствующие критерию, не найдены")
                 return False
 
-            # Показать файлы для удаления
-            print_info(f"Найдено файлов для удаления: {len(files_to_delete)}")
-            for i, file_path in enumerate(files_to_delete, 1):
-                size = self.get_file_size(file_path)
-                print(f"  {i}. {file_path.name} ({size})")
-
-            # Подтверждение
-            if confirm_action("Вы уверены, что хотите удалить эти файлы?"):
-                deleted_count = 0
-                for file_path in files_to_delete:
-                    try:
-                        file_path.unlink()
-                        print_success(f"Удален: {file_path.name}")
-                        deleted_count += 1
-                    except Exception as e:
-                        print_error(f"Ошибка при удалении {file_path.name}: {str(e)}")
-
-                print_success(f"Удалено файлов: {deleted_count}/{len(files_to_delete)}")
-                return True
-            else:
-                print_info("Удаление отменено")
-                return False
+            return files_to_delete
 
         except Exception as e:
-            print_error(f"Ошибка при удалении файлов: {str(e)}")
-            return False
+            print_error(f"Ошибка при поиске файлов: {str(e)}")
+            return []
+
+    def execute_deletion(self, files_to_delete):
+        """Выполнить удаление файлов"""
+        deleted_count = 0
+        for file_path in files_to_delete:
+            try:
+                file_path.unlink()
+                print_success(f"Удален: {file_path.name}")
+                deleted_count += 1
+            except Exception as e:
+                print_error(f"Ошибка при удалении {file_path.name}: {str(e)}")
+
+        print_success(f"Удалено файлов: {deleted_count}/{len(files_to_delete)}")
+        return deleted_count
 
     def get_unique_filename(self, original_path):
         """Получить уникальное имя файла"""
@@ -152,3 +146,17 @@ class FileManager:
             if not new_path.exists():
                 return new_path
             counter += 1
+
+    def create_backup_folder(self):
+        """Создать папку для резервных копий"""
+        backup_dir = self.current_directory / "backup"
+        backup_dir.mkdir(exist_ok=True)
+        return backup_dir
+
+    def validate_path(self, path_str):
+        """Проверка существования пути"""
+        path = Path(path_str)
+        if not path.exists():
+            print_error(f"Путь не существует: {path_str}")
+            return False
+        return True
